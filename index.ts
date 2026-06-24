@@ -2,21 +2,24 @@ import { BunHttpServer, BunRuntime } from "@effect/platform-bun"
 import { Config, Layer } from "effect"
 import { HttpApi, HttpApiBuilder, HttpApiSwagger, OpenApi } from "effect/unstable/httpapi"
 import { HttpRouter } from "effect/unstable/http"
-import { AppConfig } from "@/config/index.ts"
-import { SqlLive } from "@/infra/sql.ts"
-import { LoggerLive } from "@/infra/logger.ts"
-import { CryptoService } from "@/infra/crypto.ts"
-import { JoseService } from "@/infra/jose.ts"
-import { UserApi, UserHandlers } from "@/domain/user/user.http.ts"
-import { AccountApi, AccountHandlers } from "@/domain/account/account.http.ts"
-import { ClientApi, ClientHandlers } from "@/domain/client/client.http.ts"
-import { OAuthApi, AuthorizationHandlers } from "@/domain/authorization/authorization.http.ts"
-import { VerificationApi, VerificationHandlers } from "@/domain/verification/verification.http.ts"
-import { WellKnownApi, WellKnownHandlers } from "@/well-known/well-known.http.ts"
-import { KeysApi, KeysHandlers } from "@/domain/keys/keys.http.ts"
-import { LinkingApi, LinkingHandlers } from "@/domain/linking/linking.http.ts"
+import { AppConfig } from "./src/config/index.ts"
+import { SqlLive } from "./src/infra/sql.ts"
+import { LoggerLive } from "./src/infra/logger.ts"
+import { CryptoService } from "./src/infra/crypto.ts"
+import { JoseService } from "./src/infra/jose.ts"
+import { UserApi, UserHandlers } from "./src/domain/user/user.http.ts"
+import { AccountApi, AccountHandlers } from "./src/domain/account/account.http.ts"
+import { ClientApi, ClientHandlers } from "./src/domain/client/client.http.ts"
+import { OAuthApi, AuthorizationHandlers } from "./src/domain/authorization/authorization.http.ts"
+import { VerificationApi, VerificationHandlers } from "./src/domain/verification/verification.http.ts"
+import { WellKnownApi, WellKnownHandlers } from "./src/well-known/well-known.http.ts"
+import { KeysApi, KeysHandlers } from "./src/domain/keys/keys.http.ts"
+import { LinkingApi, LinkingHandlers } from "./src/domain/linking/linking.http.ts"
+import { httpLogger } from "./src/middleware/logger.ts"
+import { errorHandler } from "./src/middleware/error.ts"
 
-class SsoApi extends HttpApi.make("sso-api")
+
+const RootApi =  HttpApi.make("sso-api")
   .addHttpApi(UserApi)
   .addHttpApi(AccountApi)
   .addHttpApi(ClientApi)
@@ -35,7 +38,7 @@ const InfraLayer = Layer.mergeAll(
   JoseService.layer,
 )
 
-const ApiRoutes = Layer.mergeAll(
+const ApiLayer = Layer.mergeAll(
   HttpApiBuilder.layer(UserApi).pipe(Layer.provide(UserHandlers)),
   HttpApiBuilder.layer(AccountApi).pipe(Layer.provide(AccountHandlers)),
   HttpApiBuilder.layer(ClientApi).pipe(Layer.provide(ClientHandlers)),
@@ -47,11 +50,15 @@ const ApiRoutes = Layer.mergeAll(
 ).pipe(Layer.provide(InfraLayer))
 
 const AllRoutes = Layer.mergeAll(
-  ApiRoutes,
-  HttpApiSwagger.layer(SsoApi, { path: "/docs" }),
+  ApiLayer,
+  HttpApiSwagger.layer(RootApi, { path: "/docs" }),
 )
 
-const ServerLayer = HttpRouter.serve(AllRoutes).pipe(
+const middleware = (app: Parameters<typeof httpLogger>[0]) => errorHandler(httpLogger(app))
+
+const HttpServerLayer = HttpRouter.serve(AllRoutes, {
+	middleware, disableLogger: true
+}).pipe(
   Layer.provide(
     BunHttpServer.layerConfig({
       port: Config.withDefault(Config.int("PORT"), 3004),
@@ -60,4 +67,4 @@ const ServerLayer = HttpRouter.serve(AllRoutes).pipe(
   Layer.provide(InfraLayer)
 )
 
-BunRuntime.runMain(Layer.launch(Layer.mergeAll(ServerLayer, LoggerLive)))
+BunRuntime.runMain(Layer.launch(Layer.mergeAll(HttpServerLayer, LoggerLive))) as any
