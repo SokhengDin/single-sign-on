@@ -59,10 +59,7 @@ export class JoseService extends Context.Service<JoseService, {
       const generateKeyPairFn = Effect.fn("JoseService.generateKeyPair")(function* (kid: string, algorithm: string) {
         return yield* Effect.tryPromise({
           try: async () => {
-            const alg = algorithm.startsWith("RS") ? "RSA-PSS" : "EC"
-            const crv = algorithm === "ES256" ? "P-256" : algorithm === "ES384" ? "P-384" : undefined
-            const params = alg === "EC" ? { crv } : { modulusLength: 2048 }
-            const { privateKey, publicKey } = await generateKeyPair(alg, params as Parameters<typeof generateKeyPair>[1])
+            const { privateKey, publicKey } = await generateKeyPair(algorithm, { extractable: true })
             const privatePem = await exportPKCS8(privateKey)
             const publicPem  = await exportSPKI(publicKey)
             const jwk        = await exportJWK(publicKey)

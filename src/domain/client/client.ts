@@ -78,12 +78,13 @@ export class ClientService extends Context.Service<ClientService, {
         if (!client.redirect_uris.includes(redirectUri)) {
           return yield* new InvalidRedirectUriError({ redirectUri })
         }
-        if (!client.is_public) {
-          if (!clientSecret) return yield* new InvalidClientSecretError()
-          const hash = yield* crypto.sha256(clientSecret)
-          const rows = yield* repo.findByClientId(clientId)
-          if ((rows as unknown as { client_secret?: string })?.client_secret !== hash) {
-            return yield* new InvalidClientSecretError()
+        if (clientSecret !== undefined) {
+          if (!client.is_public) {
+            const hash = yield* crypto.sha256(clientSecret)
+            const rows = yield* repo.findByClientId(clientId)
+            if ((rows as unknown as { client_secret?: string })?.client_secret !== hash) {
+              return yield* new InvalidClientSecretError()
+            }
           }
         }
         return client

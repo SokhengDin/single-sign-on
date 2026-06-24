@@ -1,4 +1,4 @@
-import { Schema } from "effect"
+import { Data, Effect, Schema } from "effect"
 import { HttpServerResponse } from "effect/unstable/http"
 
 export const ApiResponse = <A>(dataSchema: Schema.Schema<A>) =>
@@ -39,5 +39,20 @@ export const apiError = <A = never>(status: number, message: string, data?: A): 
   data,
 })
 
-export const httpError = <A = never>(status: number, message: string, data?: A) =>
-  HttpServerResponse.json({ status, message, data } satisfies ApiResponse<A | undefined>, { status })
+export class HttpErrorResponse extends Data.TaggedError("HttpErrorResponse")<{
+  readonly response: HttpServerResponse.HttpServerResponse
+}> {}
+
+export const httpError = (status: number, message: string) =>
+  Effect.fail(
+    new HttpErrorResponse({
+      response: HttpServerResponse.jsonUnsafe({ status, message, data: null }, { status }),
+    })
+  )
+
+export const unwrapHttpErrors = <A, E, R>(
+  effect: Effect.Effect<A, E | HttpErrorResponse, R>
+): Effect.Effect<A | HttpServerResponse.HttpServerResponse, Exclude<E, HttpErrorResponse>, R> =>
+  effect.pipe(
+    Effect.catchTag("HttpErrorResponse", (e) => Effect.succeed((e as HttpErrorResponse).response))
+  ) as Effect.Effect<A | HttpServerResponse.HttpServerResponse, Exclude<E, HttpErrorResponse>, R>

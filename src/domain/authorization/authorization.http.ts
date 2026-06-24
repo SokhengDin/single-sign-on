@@ -12,6 +12,7 @@ import { UserinfoService } from "@/domain/userinfo/userinfo.ts"
 import { JwksService } from "@/domain/jwks/jwks.ts"
 import { AppConfig } from "@/config/index.ts"
 import { JoseService } from "@/infra/jose.ts"
+import { httpError, unwrapHttpErrors } from "@/infra/response.ts"
 
 export class OAuthApi extends HttpApi.make("oauth-api")
   .add(
@@ -54,104 +55,142 @@ export const AuthorizationHandlers = HttpApiBuilder.group(
 
     return handlers
       .handle("authorize", ({ query }) =>
-        Effect.gen(function* () {
-          const client = yield* clients.validateClient(query.client_id, undefined, query.redirect_uri)
-          const code   = yield* authorization.issueCode({
-            userId:          "",
-            clientId:        client.id,
-            redirectUri:     query.redirect_uri,
-            scopes:          query.scope.split(" "),
-            codeChallenge:   query.code_challenge ?? null,
-            challengeMethod: query.code_challenge_method ?? null,
-            nonce:           query.nonce ?? null,
+        unwrapHttpErrors(
+          Effect.gen(function* () {
+            const client = yield* clients.validateClient(query.client_id, undefined, query.redirect_uri).pipe(
+              Effect.catchTag("ClientNotFoundError",      () => httpError(400, "invalid client_id")),
+              Effect.catchTag("ClientInactiveError",      () => httpError(400, "client is inactive")),
+              Effect.catchTag("InvalidRedirectUriError",  () => httpError(400, "invalid redirect_uri")),
+              Effect.catchTag("InvalidClientSecretError", () => httpError(401, "invalid client credentials")),
+              Effect.catchTag("SqlError",                 () => httpError(503, "service unavailable")),
+            )
+            const code = yield* authorization.issueCode({
+              userId:          "",
+              clientId:        client.id,
+              redirectUri:     query.redirect_uri,
+              scopes:          query.scope ? query.scope.split(" ") : [],
+              codeChallenge:   query.code_challenge ?? null,
+              challengeMethod: query.code_challenge_method ?? null,
+              nonce:           query.nonce ?? null,
+            }).pipe(
+              Effect.catchTag("SqlError", () => httpError(503, "service unavailable")),
+            )
+            return { redirect_uri: `${query.redirect_uri}?code=${code}&state=${query.state ?? ""}` }
           })
-          return ({ redirect_uri: `${query.redirect_uri}?code=${code}&state=${query.state ?? ""}` })
-        }).pipe(Effect.orDie)
+        )
       )
-      .handle("token", ({ payload, request }) =>
-        Effect.gen(function* () {
-          const ipAddress = request.headers["x-forwarded-for"] as string | null ?? null
-          const userAgent = request.headers["user-agent"] as string | null ?? null
+      .handle("token", ({ payload, request }) => {
+        const ipAddress = request.headers["x-forwarded-for"] as string | null ?? null
+        const userAgent = request.headers["user-agent"] as string | null ?? null
 
-          if (payload.grant_type === "authorization_code") {
-            if (!payload.code || !payload.redirect_uri) {
-              return yield* Effect.die("missing code or redirect_uri")
-            }
-            const authCode = yield* authorization.exchangeCode(
-              payload.code,
-              payload.redirect_uri,
-              payload.code_verifier ?? null,
-            ).pipe(Effect.orDie)
-
-            const issued = yield* tokens.issueTokenPair(
-              authCode.userId,
-              authCode.clientId,
-              authCode.scopes,
-              ipAddress,
-              userAgent,
-            )
-
-            const signingKey = yield* jwks.getActiveSigningKey().pipe(Effect.orDie)
-            const idToken    = yield* jose.signIdToken(
-              {
-                sub:   authCode.userId,
-                iss:   config.appUrl,
-                aud:   authCode.clientId,
-                nonce: authCode.nonce ?? undefined,
-              },
-              signingKey,
-              "1h",
-            ).pipe(Effect.orDie)
-
-            return ({
-              access_token:  issued.accessToken,
-              token_type:    "Bearer",
-              expires_in:    3600,
-              refresh_token: issued.refreshToken,
-              id_token:      idToken,
-              scope:         authCode.scopes.join(" "),
-            })
+        if (payload.grant_type === "authorization_code") {
+          if (!payload.code || !payload.redirect_uri) {
+            return unwrapHttpErrors(httpError(400, "missing code or redirect_uri"))
           }
-
-          if (payload.grant_type === "refresh_token") {
-            if (!payload.refresh_token) return yield* Effect.die("missing refresh_token")
-            const old = yield* tokens.validateAccessToken(payload.refresh_token).pipe(Effect.orDie)
-            yield* tokens.revokeToken(payload.refresh_token).pipe(Effect.orDie)
-            const issued = yield* tokens.issueTokenPair(
-              old.userId,
-              old.clientId,
-              old.scopes,
-              ipAddress,
-              userAgent,
-            )
-            return ({
-              access_token:  issued.accessToken,
-              token_type:    "Bearer",
-              expires_in:    3600,
-              refresh_token: issued.refreshToken,
-              scope:         old.scopes.join(" "),
+          return unwrapHttpErrors(
+            Effect.gen(function* () {
+              const authCode = yield* authorization.exchangeCode(
+                payload.code!,
+                payload.redirect_uri!,
+                payload.code_verifier ?? null,
+              ).pipe(
+                Effect.catchTag("AuthCodeNotFoundError",    () => httpError(400, "invalid code")),
+                Effect.catchTag("AuthCodeAlreadyUsedError", () => httpError(400, "code already used")),
+                Effect.catchTag("AuthCodeExpiredError",     () => httpError(400, "code expired")),
+                Effect.catchTag("RedirectMismatchError",    () => httpError(400, "redirect_uri mismatch")),
+                Effect.catchTag("PKCEVerifyError",          () => httpError(400, "invalid code_verifier")),
+                Effect.catchTag("SqlError",                 () => httpError(503, "service unavailable")),
+              )
+              const issued = yield* tokens.issueTokenPair(
+                authCode.userId, authCode.clientId, authCode.scopes, ipAddress, userAgent,
+              ).pipe(
+                Effect.catchTag("SqlError", () => httpError(503, "service unavailable")),
+              )
+              const signingKey = yield* jwks.getActiveSigningKey().pipe(
+                Effect.catchTag("NoActiveSigningKeyError", () => httpError(500, "no signing key configured")),
+                Effect.catchTag("SqlError",                () => httpError(503, "service unavailable")),
+              )
+              const idToken = yield* jose.signIdToken(
+                { sub: authCode.userId, iss: config.appUrl, aud: authCode.clientId, nonce: authCode.nonce ?? undefined },
+                signingKey,
+                "1h",
+              ).pipe(
+                Effect.catchTag("JwtSignError", () => httpError(500, "failed to sign token")),
+              )
+              return {
+                access_token:  issued.accessToken,
+                token_type:    "Bearer" as const,
+                expires_in:    3600,
+                refresh_token: issued.refreshToken,
+                id_token:      idToken,
+                scope:         authCode.scopes.join(" "),
+              }
             })
-          }
+          )
+        }
 
-          return yield* Effect.die(`unsupported grant_type: ${payload.grant_type}`)
-        }).pipe(Effect.orDie)
-      )
+        if (payload.grant_type === "refresh_token") {
+          if (!payload.refresh_token) {
+            return unwrapHttpErrors(httpError(400, "missing refresh_token"))
+          }
+          return unwrapHttpErrors(
+            Effect.gen(function* () {
+              const old = yield* tokens.validateAccessToken(payload.refresh_token!).pipe(
+                Effect.catchTag("TokenNotFoundError", () => httpError(401, "invalid token")),
+                Effect.catchTag("TokenExpiredError",  () => httpError(401, "token expired")),
+                Effect.catchTag("TokenRevokedError",  () => httpError(401, "token revoked")),
+                Effect.catchTag("SqlError",           () => httpError(503, "service unavailable")),
+              )
+              yield* tokens.revokeToken(payload.refresh_token!).pipe(
+                Effect.catchTag("TokenNotFoundError", () => Effect.void),
+                Effect.catchTag("SqlError",           () => httpError(503, "service unavailable")),
+              )
+              const issued = yield* tokens.issueTokenPair(
+                old.userId, old.clientId, old.scopes, ipAddress, userAgent,
+              ).pipe(
+                Effect.catchTag("SqlError", () => httpError(503, "service unavailable")),
+              )
+              return {
+                access_token:  issued.accessToken,
+                token_type:    "Bearer" as const,
+                expires_in:    3600,
+                refresh_token: issued.refreshToken,
+                scope:         old.scopes.join(" "),
+              }
+            })
+          )
+        }
+
+        return unwrapHttpErrors(httpError(400, `unsupported grant_type: ${payload.grant_type}`))
+      })
       .handle("revoke", ({ payload }) =>
         tokens.revokeToken(payload.token).pipe(
           Effect.as(void 0),
-          Effect.orDie,
+          Effect.catchTag("TokenNotFoundError", () => Effect.void),
+          Effect.catchTag("SqlError",           () => Effect.void),
         )
       )
       .handle("introspect", ({ payload }) =>
-        introspect.introspect(payload.token).pipe(Effect.orDie)
+        unwrapHttpErrors(
+          introspect.introspect(payload.token).pipe(
+            Effect.catchTag("SqlError", () => httpError(503, "service unavailable")),
+          )
+        )
       )
       .handle("userinfo", ({ request }) =>
-        Effect.gen(function* () {
-          const auth = request.headers["authorization"] as string | undefined
-          if (!auth?.startsWith("Bearer ")) return yield* Effect.die("missing Bearer token")
-          const raw = auth.slice(7)
-          return yield* userinfo.getForToken(raw).pipe(Effect.orDie)
-        }).pipe(Effect.orDie)
+        unwrapHttpErrors(
+          Effect.gen(function* () {
+            const auth = request.headers["authorization"] as string | undefined
+            if (!auth?.startsWith("Bearer ")) return yield* httpError(401, "missing Bearer token")
+            const raw = auth.slice(7)
+            return yield* userinfo.getForToken(raw).pipe(
+              Effect.catchTag("TokenNotFoundError", () => httpError(401, "invalid token")),
+              Effect.catchTag("TokenExpiredError",  () => httpError(401, "token expired")),
+              Effect.catchTag("TokenRevokedError",  () => httpError(401, "token revoked")),
+              Effect.catchTag("SqlError",           () => httpError(503, "service unavailable")),
+            )
+          })
+        )
       )
   })
 ).pipe(
