@@ -26,7 +26,7 @@ export const WellKnownHandlers = HttpApiBuilder.group(
     return handlers
       .handle("jwks", () =>
         jwks.getPublicJwks().pipe(
-          Effect.map((keys) => new JwksResponse({ keys: keys as ReadonlyArray<Record<string, unknown>> })),
+          Effect.map((keys) => ({ keys: keys as ReadonlyArray<Record<string, unknown>> })),
           Effect.orDie,
         )
       )

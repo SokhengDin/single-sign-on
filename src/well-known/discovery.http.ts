@@ -6,7 +6,7 @@ export const makeDiscovery = Effect.fn("discovery")(function* () {
   const config = yield* AppConfig
   const base   = config.appUrl
 
-  return new OidcDiscovery({
+  return ({
     issuer:                                base,
     authorization_endpoint:                `${base}/authorize`,
     token_endpoint:                        `${base}/token`,

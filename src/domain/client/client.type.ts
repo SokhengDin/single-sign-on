@@ -14,19 +14,21 @@ export const Client = Schema.Struct({
 })
 export type Client = Schema.Schema.Type<typeof Client>
 
-export class CreateClientInput extends Schema.Class<CreateClientInput>("CreateClientInput")({
-  name:         Schema.String,
-  clientId:     Schema.String,
-  clientSecret: Schema.optional(Schema.String),
-  redirectUris: Schema.Array(Schema.String),
-  scopes:       Schema.Array(Schema.String),
-  grantTypes:   Schema.Array(Schema.String),
-  isPublic:     Schema.Boolean,
-}) {}
+export const CreateClientInput = Schema.Struct({
+  name:          Schema.String,
+  client_id:     Schema.String,
+  client_secret: Schema.optional(Schema.String),
+  redirect_uris: Schema.Array(Schema.String),
+  scopes:        Schema.Array(Schema.String),
+  grant_types:   Schema.Array(Schema.String),
+  is_public:     Schema.Boolean,
+})
+export type CreateClientInput = Schema.Schema.Type<typeof CreateClientInput>
 
-export class UpdateClientInput extends Schema.Class<UpdateClientInput>("UpdateClientInput")({
-  name:         Schema.optional(Schema.String),
-  redirectUris: Schema.optional(Schema.Array(Schema.String)),
-  scopes:       Schema.optional(Schema.Array(Schema.String)),
-  grantTypes:   Schema.optional(Schema.Array(Schema.String)),
-}) {}
+export const UpdateClientInput = Schema.Struct({
+  name:          Schema.optional(Schema.String),
+  redirect_uris: Schema.optional(Schema.Array(Schema.String)),
+  scopes:        Schema.optional(Schema.Array(Schema.String)),
+  grant_types:   Schema.optional(Schema.Array(Schema.String)),
+})
+export type UpdateClientInput = Schema.Schema.Type<typeof UpdateClientInput>

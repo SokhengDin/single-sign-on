@@ -54,7 +54,7 @@ export const AuthorizationHandlers = HttpApiBuilder.group(
             challengeMethod: query.code_challenge_method ?? null,
             nonce:           query.nonce ?? null,
           })
-          return new AuthorizeResponse({ redirect_uri: `${redirectUri}?code=${code}&state=${query.state ?? ""}` })
+          return ({ redirect_uri: `${redirectUri}?code=${code}&state=${query.state ?? ""}` })
         }).pipe(Effect.orDie)
       )
       .handle("token", () => Effect.die("not implemented"))

@@ -1,6 +1,6 @@
 import { Schema } from "effect"
 
-export class AuthorizeParams extends Schema.Class<AuthorizeParams>("AuthorizeParams")({
+export const AuthorizeParams = Schema.Struct({
   client_id:             Schema.String,
   redirect_uri:          Schema.String,
   response_type:         Schema.String,
@@ -9,8 +9,10 @@ export class AuthorizeParams extends Schema.Class<AuthorizeParams>("AuthorizePar
   code_challenge:        Schema.optional(Schema.String),
   code_challenge_method: Schema.optional(Schema.String),
   nonce:                 Schema.optional(Schema.String),
-}) {}
+})
+export type AuthorizeParams = Schema.Schema.Type<typeof AuthorizeParams>
 
-export class AuthorizeResponse extends Schema.Class<AuthorizeResponse>("AuthorizeResponse")({
+export const AuthorizeResponse = Schema.Struct({
   redirect_uri: Schema.String,
-}) {}
+})
+export type AuthorizeResponse = Schema.Schema.Type<typeof AuthorizeResponse>

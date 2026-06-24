@@ -26,7 +26,7 @@ export class UserService extends Context.Service<UserService, {
       const create = Effect.fn("UserService.create")(function* (
         input: CreateUserInput
       ): Effect.fn.Return<User, SqlError.SqlError> {
-        return yield* repo.insert(input.displayName, input.avatarUrl)
+        return yield* repo.insert(input.display_name, input.avatar_url)
       })
 
       const findById = Effect.fn("UserService.findById")(function* (
@@ -41,7 +41,7 @@ export class UserService extends Context.Service<UserService, {
         userId: string,
         input: UpdateUserInput
       ): Effect.fn.Return<User, UserNotFoundError | SqlError.SqlError> {
-        const user = yield* repo.updateById(userId, input.displayName, input.avatarUrl)
+        const user = yield* repo.updateById(userId, input.display_name, input.avatar_url)
         if (!user) return yield* new UserNotFoundError({ userId })
         return user
       })
@@ -57,17 +57,17 @@ export class UserService extends Context.Service<UserService, {
       const linkAccount = Effect.fn("UserService.linkAccount")(function* (
         input: LinkAccountInput
       ): Effect.fn.Return<LinkedAccount, LinkedAccountConflictError | SqlError.SqlError> {
-        const existing = yield* repo.findLinkedAccountActive(input.userId, input.externalSystem)
+        const existing = yield* repo.findLinkedAccountActive(input.user_id, input.external_system)
         if (existing) {
           return yield* new LinkedAccountConflictError({
-            userId:         input.userId,
-            externalSystem: input.externalSystem,
+            userId:         input.user_id,
+            externalSystem: input.external_system,
           })
         }
         return yield* repo.insertLinkedAccount(
-          input.userId,
-          input.externalUserId,
-          input.externalSystem,
+          input.user_id,
+          input.external_user_id,
+          input.external_system,
           input.scope
         )
       })

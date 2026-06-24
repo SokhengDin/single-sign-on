@@ -12,10 +12,11 @@ export const Account = Schema.Struct({
 })
 export type Account = Schema.Schema.Type<typeof Account>
 
-export class UpsertAccountInput extends Schema.Class<UpsertAccountInput>("UpsertAccountInput")({
-  userId:     Schema.String,
-  provider:   Schema.String,
-  providerId: Schema.String,
-  payload:    Schema.Unknown,
-  scope:      Schema.Array(Schema.String),
-}) {}
+export const UpsertAccountInput = Schema.Struct({
+  user_id:     Schema.String,
+  provider:    Schema.String,
+  provider_id: Schema.String,
+  payload:     Schema.Unknown,
+  scope:       Schema.Array(Schema.String),
+})
+export type UpsertAccountInput = Schema.Schema.Type<typeof UpsertAccountInput>

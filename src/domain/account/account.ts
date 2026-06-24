@@ -6,8 +6,11 @@ import { AccountRepo } from "./account.sql.ts"
 
 export class AccountService extends Context.Service<AccountService, {
   upsert(input: UpsertAccountInput): Effect.Effect<Account, SqlError.SqlError>
+
   findByProvider(provider: string, providerId: string): Effect.Effect<Account, AccountNotFoundError | SqlError.SqlError>
+
   findAllByUser(userId: string): Effect.Effect<ReadonlyArray<Account>, SqlError.SqlError>
+	
 }>()("sso/domain/AccountService") {
   static readonly layer = Layer.effect(
     AccountService,
@@ -17,7 +20,7 @@ export class AccountService extends Context.Service<AccountService, {
       const upsert = Effect.fn("AccountService.upsert")(function* (
         input: UpsertAccountInput
       ): Effect.fn.Return<Account, SqlError.SqlError> {
-        return yield* repo.upsert(input.userId, input.provider, input.providerId, input.payload, input.scope)
+        return yield* repo.upsert(input.user_id, input.provider, input.provider_id, input.payload, input.scope)
       })
 
       const findByProvider = Effect.fn("AccountService.findByProvider")(function* (

@@ -21,10 +21,10 @@ export class IntrospectService extends Context.Service<IntrospectService, {
         const token = yield* tokenRepo.findByHash(hash)
 
         if (!token || token.revokedAt !== null) {
-          return new IntrospectResponse({ active: false })
+          return { active: false }
         }
         if (token.expiresAt !== null && DateTime.isGreaterThan(DateTime.nowUnsafe(), token.expiresAt)) {
-          return new IntrospectResponse({ active: false })
+          return { active: false }
         }
 
         const expSeconds = token.expiresAt
@@ -32,7 +32,7 @@ export class IntrospectService extends Context.Service<IntrospectService, {
           : undefined
         const iatSeconds = Math.floor(DateTime.toEpochMillis(token.createdAt) / 1000)
 
-        return new IntrospectResponse({
+        return ({
           active:      true,
           sub:         token.userId,
           client_id:   token.clientId,

@@ -31,17 +31,17 @@ export class ClientService extends Context.Service<ClientService, {
       const create = Effect.fn("ClientService.create")(function* (
         input: CreateClientInput
       ): Effect.fn.Return<Client, SqlError.SqlError> {
-        const secretHash = input.clientSecret
-          ? yield* crypto.sha256(input.clientSecret)
+        const secretHash = input.client_secret
+          ? yield* crypto.sha256(input.client_secret)
           : null
         return yield* repo.insert(
           input.name,
-          input.clientId,
+          input.client_id,
           secretHash,
-          input.redirectUris,
+          input.redirect_uris,
           input.scopes,
-          input.grantTypes,
-          input.isPublic
+          input.grant_types,
+          input.is_public
         )
       })
 
@@ -86,7 +86,7 @@ export class ClientService extends Context.Service<ClientService, {
         id: string,
         input: UpdateClientInput
       ): Effect.fn.Return<Client, ClientNotFoundError | SqlError.SqlError> {
-        const client = yield* repo.update(id, input.name, input.redirectUris, input.scopes, input.grantTypes)
+        const client = yield* repo.update(id, input.name, input.redirect_uris, input.scopes, input.grant_types)
         if (!client) return yield* new ClientNotFoundError({ clientId: id })
         return client
       })

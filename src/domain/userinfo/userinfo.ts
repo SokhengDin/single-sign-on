@@ -26,7 +26,7 @@ export class UserinfoService extends Context.Service<UserinfoService, {
         const primaryAccount = accounts[0]
         const payload = primaryAccount?.payload as Record<string, unknown> | undefined
 
-        return new UserinfoResponse({
+        return ({
           sub:     token.userId,
           name:    user.displayName ?? (payload?.["name"] as string | undefined),
           picture: user.avatarUrl   ?? (payload?.["photo_url"] as string | undefined),

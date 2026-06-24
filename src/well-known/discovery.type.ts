@@ -1,6 +1,6 @@
 import { Schema } from "effect"
 
-export class OidcDiscovery extends Schema.Class<OidcDiscovery>("OidcDiscovery")({
+export const OidcDiscovery = Schema.Struct({
   issuer:                                Schema.String,
   authorization_endpoint:                Schema.String,
   token_endpoint:                        Schema.String,
@@ -15,4 +15,5 @@ export class OidcDiscovery extends Schema.Class<OidcDiscovery>("OidcDiscovery")(
   token_endpoint_auth_methods_supported: Schema.Array(Schema.String),
   grant_types_supported:                 Schema.Array(Schema.String),
   claims_supported:                      Schema.Array(Schema.String),
-}) {}
+})
+export type OidcDiscovery = Schema.Schema.Type<typeof OidcDiscovery>

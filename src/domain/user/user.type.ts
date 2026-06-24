@@ -22,19 +22,22 @@ export const LinkedAccount = Schema.Struct({
 })
 export type LinkedAccount = Schema.Schema.Type<typeof LinkedAccount>
 
-export class CreateUserInput extends Schema.Class<CreateUserInput>("CreateUserInput")({
-  displayName: Schema.NullOr(Schema.String),
-  avatarUrl:   Schema.NullOr(Schema.String),
-}) {}
+export const CreateUserInput = Schema.Struct({
+  display_name: Schema.NullOr(Schema.String),
+  avatar_url:   Schema.NullOr(Schema.String),
+})
+export type CreateUserInput = Schema.Schema.Type<typeof CreateUserInput>
 
-export class UpdateUserInput extends Schema.Class<UpdateUserInput>("UpdateUserInput")({
-  displayName: Schema.optional(Schema.NullOr(Schema.String)),
-  avatarUrl:   Schema.optional(Schema.NullOr(Schema.String)),
-}) {}
+export const UpdateUserInput = Schema.Struct({
+  display_name: Schema.optional(Schema.NullOr(Schema.String)),
+  avatar_url:   Schema.optional(Schema.NullOr(Schema.String)),
+})
+export type UpdateUserInput = Schema.Schema.Type<typeof UpdateUserInput>
 
-export class LinkAccountInput extends Schema.Class<LinkAccountInput>("LinkAccountInput")({
-  userId:         Schema.String,
-  externalUserId: Schema.String,
-  externalSystem: Schema.String,
-  scope:          Schema.Array(Schema.String),
-}) {}
+export const LinkAccountInput = Schema.Struct({
+  user_id:          Schema.String,
+  external_user_id: Schema.String,
+  external_system:  Schema.String,
+  scope:            Schema.Array(Schema.String),
+})
+export type LinkAccountInput = Schema.Schema.Type<typeof LinkAccountInput>
