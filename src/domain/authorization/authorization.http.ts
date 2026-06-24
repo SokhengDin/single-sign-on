@@ -1,6 +1,6 @@
 import { Effect, Layer } from "effect"
 import { HttpApi, HttpApiBuilder, HttpApiEndpoint, HttpApiGroup, HttpApiSchema } from "effect/unstable/httpapi"
-import { AuthorizeParams, AuthorizeResponse } from "./authorization.type.ts"
+import { AuthorizeParams, AuthorizeResponseData } from "./authorization.type.ts"
 import { TokenRequest, TokenResponse, RevokeRequest } from "@/domain/token/token.type.ts"
 import { IntrospectRequest, IntrospectResponse } from "@/domain/introspect/introspect.type.ts"
 import { UserinfoResponse } from "@/domain/userinfo/userinfo.type.ts"
@@ -12,14 +12,14 @@ import { UserinfoService } from "@/domain/userinfo/userinfo.ts"
 import { JwksService } from "@/domain/jwks/jwks.ts"
 import { AppConfig } from "@/config/index.ts"
 import { JoseService } from "@/infra/jose.ts"
-import { httpError, unwrapHttpErrors } from "@/infra/response.ts"
+import { ApiResponse, apiOk, httpError, unwrapHttpErrors } from "@/infra/response.ts"
 
 export class OAuthApi extends HttpApi.make("oauth-api")
   .add(
     HttpApiGroup.make("oauth")
       .add(HttpApiEndpoint.get("authorize", "/authorize", {
         query:   AuthorizeParams.fields,
-        success: AuthorizeResponse,
+        success: ApiResponse(AuthorizeResponseData),
       }))
       .add(HttpApiEndpoint.post("token", "/token", {
         payload: TokenRequest,
@@ -76,7 +76,7 @@ export const AuthorizationHandlers = HttpApiBuilder.group(
             if (!redirectUri) return yield* httpError(400, "invalid redirect_uri")
 
             const code = yield* authorization.issueCode({
-              userId:          "",
+              userId:          query.user_id,
               clientId:        client.id,
               redirectUri,
               scopes:          query.scope ? query.scope.split(" ") : [],
@@ -86,7 +86,7 @@ export const AuthorizationHandlers = HttpApiBuilder.group(
             }).pipe(
               Effect.catchTag("SqlError", () => httpError(503, "service unavailable")),
             )
-            return { redirect_uri: `${redirectUri}?code=${code}&state=${query.state ?? ""}` }
+            return apiOk({ redirect_uri: `${redirectUri}?code=${code}&state=${query.state ?? ""}` })
           })
         )
       )

@@ -2,6 +2,7 @@ import { Schema } from "effect"
 
 export const AuthorizeParams = Schema.Struct({
   client_id:             Schema.String,
+  user_id:               Schema.String,
   redirect_uri:          Schema.optional(Schema.String),
   response_type:         Schema.optional(Schema.String),
   scope:                 Schema.optional(Schema.String),
@@ -12,7 +13,7 @@ export const AuthorizeParams = Schema.Struct({
 })
 export type AuthorizeParams = Schema.Schema.Type<typeof AuthorizeParams>
 
-export const AuthorizeResponse = Schema.Struct({
+export const AuthorizeResponseData = Schema.Struct({
   redirect_uri: Schema.String,
 })
-export type AuthorizeResponse = Schema.Schema.Type<typeof AuthorizeResponse>
+export type AuthorizeResponseData = Schema.Schema.Type<typeof AuthorizeResponseData>

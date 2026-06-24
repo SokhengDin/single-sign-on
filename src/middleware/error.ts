@@ -66,7 +66,12 @@ export const errorHandler = HttpMiddleware.make((app) =>
     const res = exit.value
 
     if (res.status >= 400) {
-      yield* Effect.logWarning(`← ${method} ${url} ${res.status}`)
+      const body = res.body
+      if (body._tag !== "Empty") {
+        yield* Effect.logWarning(`← ${method} ${url} ${res.status}`)
+        return res
+      }
+      yield* Effect.logWarning(`← ${method} ${url} ${res.status} [empty body]`)
       const status  = res.status
       const message = status >= 500 ? "Internal server error" : "Request failed"
       return HttpServerResponse.jsonUnsafe(errorBody(status, message), { status })

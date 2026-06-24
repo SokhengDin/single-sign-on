@@ -16,6 +16,10 @@ export class AccountApi extends HttpApi.make("account-api")
         params:  { user_id: Schema.String },
         success: ApiListResponse(Account),
       }))
+      .add(HttpApiEndpoint.get("getAccountByProvider", "/account/provider/:provider/:provider_id", {
+        params:  { provider: Schema.String, provider_id: Schema.String },
+        success: ApiResponse(Account),
+      }))
       .prefix("/api")
   )
 {}
@@ -32,6 +36,12 @@ export const AccountHandlers = HttpApiBuilder.group(
       )
       .handle("getAccountsByUser", ({ params }) =>
         accounts.findAllByUser(params.user_id).pipe(Effect.map(data => apiOk(data)), Effect.orDie)
+      )
+      .handle("getAccountByProvider", ({ params }) =>
+        accounts.findByProvider(params.provider, params.provider_id).pipe(
+          Effect.map(data => apiOk(data)),
+          Effect.orDie,
+        )
       )
   })
 ).pipe(Layer.provide(AccountService.layer))
