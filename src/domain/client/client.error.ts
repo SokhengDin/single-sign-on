@@ -13,3 +13,7 @@ export class InvalidRedirectUriError extends Schema.TaggedErrorClass<InvalidRedi
 }, { httpApiStatus: 400 }) {}
 
 export class InvalidClientSecretError extends Schema.TaggedErrorClass<InvalidClientSecretError>()("InvalidClientSecretError", {}, { httpApiStatus: 401 }) {}
+
+export class InvalidRedirectUrisForTypeError extends Schema.TaggedErrorClass<InvalidRedirectUrisForTypeError>()("InvalidRedirectUrisForTypeError", {
+  type: Schema.String,
+}, { httpApiStatus: 422 }) {}

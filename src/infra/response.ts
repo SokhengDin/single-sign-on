@@ -1,4 +1,5 @@
 import { Schema } from "effect"
+import { HttpServerResponse } from "effect/unstable/http"
 
 export const ApiResponse = <A>(dataSchema: Schema.Schema<A>) =>
   Schema.Struct({
@@ -32,7 +33,11 @@ export const apiCreated = <A>(data: A, message?: string): ApiResponse<A> => ({
   data,
 })
 
-export const apiError = (status: number, message: string): ApiResponse<never> => ({
+export const apiError = <A = never>(status: number, message: string, data?: A): ApiResponse<A> => ({
   status,
   message,
+  data,
 })
+
+export const httpError = <A = never>(status: number, message: string, data?: A) =>
+  HttpServerResponse.json({ status, message, data } satisfies ApiResponse<A | undefined>, { status })

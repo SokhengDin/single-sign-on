@@ -23,23 +23,23 @@ type LinkedAccountRow = {
 }
 
 const toUser = (row: UserRow): User => ({
-  id:          row.id,
-  displayName: row.display_name,
-  avatarUrl:   row.avatar_url,
-  isActive:    row.is_active,
-  createdAt:   DateTime.fromDateUnsafe(row.created_at),
-  updatedAt:   row.updated_at ? DateTime.fromDateUnsafe(row.updated_at) : null,
-  deletedAt:   row.deleted_at ? DateTime.fromDateUnsafe(row.deleted_at) : null,
+  id:           row.id,
+  display_name: row.display_name,
+  avatar_url:   row.avatar_url,
+  is_active:    row.is_active,
+  created_at:   DateTime.fromDateUnsafe(row.created_at),
+  updated_at:   row.updated_at ? DateTime.fromDateUnsafe(row.updated_at) : null,
+  deleted_at:   row.deleted_at ? DateTime.fromDateUnsafe(row.deleted_at) : null,
 })
 
 const toLinkedAccount = (row: LinkedAccountRow): LinkedAccount => ({
-  id:             row.id,
-  userId:         row.user_id,
-  externalUserId: row.external_user_id,
-  externalSystem: row.external_system,
-  scope:          row.scope,
-  linkedAt:       DateTime.fromDateUnsafe(row.linked_at),
-  unlinkedAt:     row.unlinked_at ? DateTime.fromDateUnsafe(row.unlinked_at) : null,
+  id:               row.id,
+  user_id:          row.user_id,
+  external_user_id: row.external_user_id,
+  external_system:  row.external_system,
+  scope:            row.scope,
+  linked_at:        DateTime.fromDateUnsafe(row.linked_at),
+  unlinked_at:      row.unlinked_at ? DateTime.fromDateUnsafe(row.unlinked_at) : null,
 })
 
 export class UserRepo extends Context.Service<UserRepo, {

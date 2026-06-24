@@ -50,7 +50,7 @@ export class UserService extends Context.Service<UserService, {
         userId: string
       ): Effect.fn.Return<void, UserNotFoundError | UserAlreadyDeletedError | SqlError.SqlError> {
         const user = yield* findById(userId)
-        if (user.deletedAt !== null) return yield* new UserAlreadyDeletedError({ userId })
+        if (user.deleted_at !== null) return yield* new UserAlreadyDeletedError({ userId })
         yield* repo.softDeleteById(userId)
       })
 

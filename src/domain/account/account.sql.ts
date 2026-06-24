@@ -14,14 +14,14 @@ type AccountRow = {
 }
 
 const toAccount = (row: AccountRow): Account => ({
-  id:         row.id,
-  userId:     row.user_id,
-  provider:   row.provider,
-  providerId: row.provider_id,
-  payload:    row.payload,
-  scope:      row.scope,
-  createdAt:  DateTime.fromDateUnsafe(row.created_at),
-  updatedAt:  row.updated_at ? DateTime.fromDateUnsafe(row.updated_at) : null,
+  id:          row.id,
+  user_id:     row.user_id,
+  provider:    row.provider,
+  provider_id: row.provider_id,
+  payload:     row.payload,
+  scope:       row.scope,
+  created_at:  DateTime.fromDateUnsafe(row.created_at),
+  updated_at:  row.updated_at ? DateTime.fromDateUnsafe(row.updated_at) : null,
 })
 
 export class AccountRepo extends Context.Service<AccountRepo, {

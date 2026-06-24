@@ -13,6 +13,8 @@ import { ClientApi, ClientHandlers } from "@/domain/client/client.http.ts"
 import { OAuthApi, AuthorizationHandlers } from "@/domain/authorization/authorization.http.ts"
 import { VerificationApi, VerificationHandlers } from "@/domain/verification/verification.http.ts"
 import { WellKnownApi, WellKnownHandlers } from "@/well-known/well-known.http.ts"
+import { KeysApi, KeysHandlers } from "@/domain/keys/keys.http.ts"
+import { LinkingApi, LinkingHandlers } from "@/domain/linking/linking.http.ts"
 
 class SsoApi extends HttpApi.make("sso-api")
   .addHttpApi(UserApi)
@@ -21,6 +23,8 @@ class SsoApi extends HttpApi.make("sso-api")
   .addHttpApi(OAuthApi)
   .addHttpApi(VerificationApi)
   .addHttpApi(WellKnownApi)
+  .addHttpApi(KeysApi)
+  .addHttpApi(LinkingApi)
   .annotateMerge(OpenApi.annotations({ title: "SSO Identity Provider API" }))
 {}
 
@@ -38,6 +42,8 @@ const ApiRoutes = Layer.mergeAll(
   HttpApiBuilder.layer(OAuthApi).pipe(Layer.provide(AuthorizationHandlers)),
   HttpApiBuilder.layer(VerificationApi).pipe(Layer.provide(VerificationHandlers)),
   HttpApiBuilder.layer(WellKnownApi).pipe(Layer.provide(WellKnownHandlers)),
+  HttpApiBuilder.layer(KeysApi).pipe(Layer.provide(KeysHandlers)),
+  HttpApiBuilder.layer(LinkingApi).pipe(Layer.provide(LinkingHandlers)),
 ).pipe(Layer.provide(InfraLayer))
 
 const AllRoutes = Layer.mergeAll(
@@ -54,4 +60,4 @@ const ServerLayer = HttpRouter.serve(AllRoutes).pipe(
   Layer.provide(InfraLayer)
 )
 
-Layer.launch(Layer.mergeAll(ServerLayer, LoggerLive)).pipe(BunRuntime.runMain)
+BunRuntime.runMain(Layer.launch(Layer.mergeAll(ServerLayer, LoggerLive)))

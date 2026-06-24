@@ -1,4 +1,4 @@
--- =============================================================================
+       -- =============================================================================
 -- SSO Database — Initial Migration
 -- 20260624_init_sso.sql
 --
@@ -18,6 +18,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TYPE token_type       AS ENUM ('access', 'refresh');
 CREATE TYPE challenge_method AS ENUM ('S256');
+CREATE TYPE client_type AS ENUM ('bot', 'backend', 'spa', 'mobile');
 
 -- =============================================================================
 -- USER
@@ -105,9 +106,10 @@ CREATE TABLE linked_account (
 CREATE TABLE client (
   id            UUID        NOT NULL DEFAULT uuid_generate_v4(),
   name          TEXT        NOT NULL,
+  type          client_type NOT NULL,                    
   client_id     TEXT        NOT NULL,
   client_secret TEXT,
-  redirect_uris TEXT[]      NOT NULL,
+  redirect_uris TEXT[]      NOT NULL DEFAULT '{}',       
   scopes        TEXT[]      NOT NULL DEFAULT '{"openid","profile"}',
   grant_types   TEXT[]      NOT NULL DEFAULT '{"authorization_code","refresh_token"}',
   is_public     BOOLEAN     NOT NULL DEFAULT false,
@@ -119,11 +121,30 @@ CREATE TABLE client (
   CONSTRAINT uq_client_id          UNIQUE (client_id),
   CONSTRAINT chk_client_name       CHECK (char_length(trim(name)) > 0),
   CONSTRAINT chk_client_id         CHECK (char_length(trim(client_id)) > 0),
-  CONSTRAINT chk_redirect_uris     CHECK (cardinality(redirect_uris) > 0),
+  CONSTRAINT chk_grant_types       CHECK (
+    grant_types <@ ARRAY[
+      'authorization_code',
+      'refresh_token',
+      'client_credentials'
+    ]::TEXT[]
+  ),
+  CONSTRAINT chk_scopes            CHECK (
+    scopes <@ ARRAY[
+      'openid',
+      'profile',
+      'introspect'
+    ]::TEXT[]
+  ),
   CONSTRAINT chk_secret_or_public  CHECK (
     (is_public = true  AND client_secret IS NULL) OR
     (is_public = false AND client_secret IS NOT NULL)
-  )
+  ),
+  -- CONSTRAINT chk_backend_no_redirect CHECK (
+  --   type != 'backend' OR cardinality(redirect_uris) = 0
+  -- ),
+  -- CONSTRAINT chk_bot_has_redirect    CHECK (
+  --   type != 'bot' OR cardinality(redirect_uris) > 0
+  -- )
 );
 
 -- =============================================================================

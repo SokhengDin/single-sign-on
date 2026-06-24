@@ -28,8 +28,8 @@ export class UserinfoService extends Context.Service<UserinfoService, {
 
         return ({
           sub:     token.userId,
-          name:    user.displayName ?? (payload?.["name"] as string | undefined),
-          picture: user.avatarUrl   ?? (payload?.["photo_url"] as string | undefined),
+          name:    user.display_name ?? (payload?.["name"] as string | undefined),
+          picture: user.avatar_url  ?? (payload?.["photo_url"] as string | undefined),
           email:   payload?.["email"] as string | undefined,
         })
       })

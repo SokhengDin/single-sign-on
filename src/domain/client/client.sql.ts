@@ -1,10 +1,11 @@
 import { Context, DateTime, Effect, Layer } from "effect"
 import { SqlClient, SqlError } from "effect/unstable/sql"
-import { Client } from "./client.type.ts"
+import { Client, ClientType } from "./client.type.ts"
 
 type ClientRow = {
   id:            string
   name:          string
+  type:          ClientType
   client_id:     string
   client_secret: string | null
   redirect_uris: string[]
@@ -17,21 +18,23 @@ type ClientRow = {
 }
 
 const toClient = (row: ClientRow): Client => ({
-  id:           row.id,
-  name:         row.name,
-  clientId:     row.client_id,
-  redirectUris: row.redirect_uris,
-  scopes:       row.scopes,
-  grantTypes:   row.grant_types,
-  isPublic:     row.is_public,
-  isActive:     row.is_active,
-  createdAt:    DateTime.fromDateUnsafe(row.created_at),
-  updatedAt:    row.updated_at ? DateTime.fromDateUnsafe(row.updated_at) : null,
+  id:            row.id,
+  name:          row.name,
+  type:          row.type,
+  client_id:     row.client_id,
+  redirect_uris: row.redirect_uris,
+  scopes:        row.scopes,
+  grant_types:   row.grant_types,
+  is_public:     row.is_public,
+  is_active:     row.is_active,
+  created_at:    DateTime.fromDateUnsafe(row.created_at),
+  updated_at:    row.updated_at ? DateTime.fromDateUnsafe(row.updated_at) : null,
 })
 
 export class ClientRepo extends Context.Service<ClientRepo, {
   insert(
     name: string,
+    type: ClientType,
     clientId: string,
     clientSecretHash: string | null,
     redirectUris: readonly string[],
@@ -47,6 +50,7 @@ export class ClientRepo extends Context.Service<ClientRepo, {
   update(
     id: string,
     name: string | undefined,
+    type: ClientType | undefined,
     redirectUris: readonly string[] | undefined,
     scopes: readonly string[] | undefined,
     grantTypes: readonly string[] | undefined
@@ -62,6 +66,7 @@ export class ClientRepo extends Context.Service<ClientRepo, {
 
       const insert = Effect.fn("ClientRepo.insert")(function* (
         name: 		string,
+        type: 		ClientType,
         clientId: string,
         clientSecretHash: string | null,
         redirectUris: 		readonly string[],
@@ -70,8 +75,8 @@ export class ClientRepo extends Context.Service<ClientRepo, {
         isPublic: boolean
       ) {
         const rows = yield* sql<ClientRow>`
-          INSERT INTO client (name, client_id, client_secret, redirect_uris, scopes, grant_types, is_public)
-          VALUES (${name}, ${clientId}, ${clientSecretHash}, ${redirectUris}, ${scopes}, ${grantTypes}, ${isPublic})
+          INSERT INTO client (name, type, client_id, client_secret, redirect_uris, scopes, grant_types, is_public)
+          VALUES (${name}, ${type}, ${clientId}, ${clientSecretHash}, ${redirectUris}, ${scopes}, ${grantTypes}, ${isPublic})
           RETURNING *
         `
         return toClient(rows[0]!)
@@ -94,6 +99,7 @@ export class ClientRepo extends Context.Service<ClientRepo, {
       const update = Effect.fn("ClientRepo.update")(function* (
         id: string,
         name: string | undefined,
+        type: ClientType | undefined,
         redirectUris: readonly string[] | undefined,
         scopes: readonly string[] | undefined,
         grantTypes: readonly string[] | undefined
@@ -102,6 +108,7 @@ export class ClientRepo extends Context.Service<ClientRepo, {
           UPDATE client
           SET
             name          = COALESCE(${name ?? null}, name),
+            type          = COALESCE(${type ?? null}, type),
             redirect_uris = COALESCE(${redirectUris ?? null}, redirect_uris),
             scopes        = COALESCE(${scopes ?? null}, scopes),
             grant_types   = COALESCE(${grantTypes ?? null}, grant_types),
