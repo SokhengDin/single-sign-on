@@ -23,8 +23,8 @@ export const LinkedAccount = Schema.Struct({
 export type LinkedAccount = Schema.Schema.Type<typeof LinkedAccount>
 
 export const CreateUserInput = Schema.Struct({
-  display_name: Schema.NullOr(Schema.String),
-  avatar_url:   Schema.NullOr(Schema.String),
+  display_name: Schema.optional(Schema.NullOr(Schema.String)),
+  avatar_url:   Schema.optional(Schema.NullOr(Schema.String)),
 })
 export type CreateUserInput = Schema.Schema.Type<typeof CreateUserInput>
 

@@ -64,7 +64,8 @@ const HttpServerLayer = HttpRouter.serve(AllRoutes, {
       port: Config.withDefault(Config.int("PORT"), 3004),
     })
   ),
-  Layer.provide(InfraLayer)
+  Layer.provide(InfraLayer),
+  Layer.provide(LoggerLive),
 )
 
-BunRuntime.runMain(Layer.launch(Layer.mergeAll(HttpServerLayer, LoggerLive))) as any
+BunRuntime.runMain(Layer.launch(HttpServerLayer)) as any

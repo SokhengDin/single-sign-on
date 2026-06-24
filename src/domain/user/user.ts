@@ -26,7 +26,7 @@ export class UserService extends Context.Service<UserService, {
       const create = Effect.fn("UserService.create")(function* (
         input: CreateUserInput
       ): Effect.fn.Return<User, SqlError.SqlError> {
-        return yield* repo.insert(input.display_name, input.avatar_url)
+        return yield* repo.insert(input.display_name ?? null, input.avatar_url ?? null)
       })
 
       const findById = Effect.fn("UserService.findById")(function* (

@@ -39,8 +39,6 @@ const makeFileLogger = Effect.gen(
 	}
 )
 
-process.env["FORCE_COLOR"] = "1"
-
 export const LoggerLive = Logger.layer([
 	Logger.consolePretty({ colors: true }),
 	makeFileLogger,

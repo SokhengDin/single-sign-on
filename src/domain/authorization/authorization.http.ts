@@ -57,17 +57,28 @@ export const AuthorizationHandlers = HttpApiBuilder.group(
       .handle("authorize", ({ query }) =>
         unwrapHttpErrors(
           Effect.gen(function* () {
-            const client = yield* clients.validateClient(query.client_id, undefined, query.redirect_uri).pipe(
-              Effect.catchTag("ClientNotFoundError",      () => httpError(400, "invalid client_id")),
-              Effect.catchTag("ClientInactiveError",      () => httpError(400, "client is inactive")),
-              Effect.catchTag("InvalidRedirectUriError",  () => httpError(400, "invalid redirect_uri")),
-              Effect.catchTag("InvalidClientSecretError", () => httpError(401, "invalid client credentials")),
-              Effect.catchTag("SqlError",                 () => httpError(503, "service unavailable")),
+            const client = yield* clients.findByClientId(query.client_id).pipe(
+              Effect.catchTag("ClientNotFoundError", () => httpError(400, "invalid client_id")),
+              Effect.catchTag("SqlError",            () => httpError(503, "service unavailable")),
             )
+            if (!client.is_active) return yield* httpError(400, "client is inactive")
+
+            const redirectUri = query.redirect_uri !== undefined
+              ? (() => {
+                  if (!client.redirect_uris.includes(query.redirect_uri as string))
+                    return null
+                  return query.redirect_uri as string
+                })()
+              : client.redirect_uris.length === 1
+                ? client.redirect_uris[0]!
+                : null
+
+            if (!redirectUri) return yield* httpError(400, "invalid redirect_uri")
+
             const code = yield* authorization.issueCode({
               userId:          "",
               clientId:        client.id,
-              redirectUri:     query.redirect_uri,
+              redirectUri,
               scopes:          query.scope ? query.scope.split(" ") : [],
               codeChallenge:   query.code_challenge ?? null,
               challengeMethod: query.code_challenge_method ?? null,
@@ -75,7 +86,7 @@ export const AuthorizationHandlers = HttpApiBuilder.group(
             }).pipe(
               Effect.catchTag("SqlError", () => httpError(503, "service unavailable")),
             )
-            return { redirect_uri: `${query.redirect_uri}?code=${code}&state=${query.state ?? ""}` }
+            return { redirect_uri: `${redirectUri}?code=${code}&state=${query.state ?? ""}` }
           })
         )
       )

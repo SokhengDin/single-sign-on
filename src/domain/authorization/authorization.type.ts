@@ -2,7 +2,7 @@ import { Schema } from "effect"
 
 export const AuthorizeParams = Schema.Struct({
   client_id:             Schema.String,
-  redirect_uri:          Schema.String,
+  redirect_uri:          Schema.optional(Schema.String),
   response_type:         Schema.optional(Schema.String),
   scope:                 Schema.optional(Schema.String),
   state:                 Schema.optional(Schema.String),
