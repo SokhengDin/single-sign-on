@@ -1,0 +1,16 @@
+services:
+  sso:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sso
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    networks:
+      - eroxii_network
+
+networks:
+  eroxii_network:
+    external: true
