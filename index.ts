@@ -15,6 +15,8 @@ import { VerificationApi, VerificationHandlers } from "./src/domain/verification
 import { WellKnownApi, WellKnownHandlers } from "./src/well-known/well-known.http.ts"
 import { KeysApi, KeysHandlers } from "./src/domain/keys/keys.http.ts"
 import { LinkingApi, LinkingHandlers } from "./src/domain/linking/linking.http.ts"
+import { LoginApi, LoginHandlers } from "./src/domain/login/login.http.ts"
+import { InternalApi, InternalHandlers } from "./src/domain/internal/internal.http.ts"
 import { httpLogger } from "./src/middleware/logger.ts"
 import { errorHandler } from "./src/middleware/error.ts"
 
@@ -28,6 +30,8 @@ const RootApi =  HttpApi.make("sso-api")
   .addHttpApi(WellKnownApi)
   .addHttpApi(KeysApi)
   .addHttpApi(LinkingApi)
+  .addHttpApi(LoginApi)
+  .addHttpApi(InternalApi)
   .annotateMerge(OpenApi.annotations({ title: "SSO Identity Provider API" }))
 {}
 
@@ -47,6 +51,8 @@ const ApiLayer = Layer.mergeAll(
   HttpApiBuilder.layer(WellKnownApi).pipe(Layer.provide(WellKnownHandlers)),
   HttpApiBuilder.layer(KeysApi).pipe(Layer.provide(KeysHandlers)),
   HttpApiBuilder.layer(LinkingApi).pipe(Layer.provide(LinkingHandlers)),
+  HttpApiBuilder.layer(LoginApi).pipe(Layer.provide(LoginHandlers)),
+  HttpApiBuilder.layer(InternalApi).pipe(Layer.provide(InternalHandlers)),
 ).pipe(Layer.provide(InfraLayer))
 
 const AllRoutes = Layer.mergeAll(
@@ -54,7 +60,7 @@ const AllRoutes = Layer.mergeAll(
   HttpApiSwagger.layer(RootApi, { path: "/docs" }),
 )
 
-const middleware = (app: Parameters<typeof httpLogger>[0]) => errorHandler(httpLogger(app))
+const middleware = (app: Parameters<typeof httpLogger>[0]) => httpLogger(errorHandler(app))
 
 const HttpServerLayer = HttpRouter.serve(AllRoutes, {
 	middleware, disableLogger: true

@@ -15,12 +15,11 @@ export const httpLogger = HttpMiddleware.make((app) =>
     const ms   = Date.now() - start
 
     if (Exit.isSuccess(exit)) {
-      const status = exit.value.status
-      yield* Effect.logInfo(`← ${method} ${url} ${status} ${ms}ms [${ip}]`)
+      yield* Effect.logInfo(`← ${method} ${url} ${exit.value.status} ${ms}ms [${ip}]`)
       return exit.value
     }
 
-    yield* Effect.logError(`← ${method} ${url} 500 ${ms}ms [${ip}]`, exit.cause)
+    yield* Effect.logError(`← ${method} ${url} ${ms}ms [${ip}]`, exit.cause)
     return yield* Effect.failCause(exit.cause)
   })
 )

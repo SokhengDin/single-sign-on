@@ -45,6 +45,8 @@ export class ClientRepo extends Context.Service<ClientRepo, {
 
   findByClientId(clientId: string): Effect.Effect<Client | null, SqlError.SqlError>
 
+  findSecretHash(clientId: string): Effect.Effect<string | null, SqlError.SqlError>
+
   findById(id: string): Effect.Effect<Client | null, SqlError.SqlError>
 
   update(
@@ -89,6 +91,13 @@ export class ClientRepo extends Context.Service<ClientRepo, {
         return rows[0] ? toClient(rows[0]) : null
       })
 
+      const findSecretHash = Effect.fn("ClientRepo.findSecretHash")(function* (clientId: string) {
+        const rows = yield* sql<{ client_secret: string | null }>`
+          SELECT client_secret FROM client WHERE client_id = ${clientId} AND is_active = true
+        `
+        return rows[0]?.client_secret ?? null
+      })
+
       const findById = Effect.fn("ClientRepo.findById")(function* (id: string) {
         const rows = yield* sql<ClientRow>`
           SELECT * FROM client WHERE id = ${id}
@@ -125,7 +134,7 @@ export class ClientRepo extends Context.Service<ClientRepo, {
         `
       })
 
-      return ClientRepo.of({ insert, findByClientId, findById, update, deactivate })
+      return ClientRepo.of({ insert, findByClientId, findSecretHash, findById, update, deactivate })
     })
   )
 }

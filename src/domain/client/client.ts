@@ -23,6 +23,11 @@ export class ClientService extends Context.Service<ClientService, {
     redirectUri: string
   ): Effect.Effect<Client, ClientNotFoundError | ClientInactiveError | InvalidRedirectUriError | InvalidClientSecretError | SqlError.SqlError>
 
+  verifyCredentials(
+    clientId: string,
+    clientSecret: string
+  ): Effect.Effect<Client, ClientNotFoundError | InvalidClientSecretError | SqlError.SqlError>
+
   update(id: string, input: UpdateClientInput): Effect.Effect<Client, ClientNotFoundError | SqlError.SqlError>
 
   deactivate(id: string): Effect.Effect<void, ClientNotFoundError | SqlError.SqlError>
@@ -113,7 +118,18 @@ export class ClientService extends Context.Service<ClientService, {
         yield* repo.deactivate(id)
       })
 
-      return ClientService.of({ create, findById, findByClientId, validateClient, update, deactivate })
+      const verifyCredentials = Effect.fn("ClientService.verifyCredentials")(function* (
+        clientId: string,
+        clientSecret: string
+      ): Effect.fn.Return<Client, ClientNotFoundError | InvalidClientSecretError | SqlError.SqlError> {
+        const client     = yield* findByClientId(clientId)
+        const secretHash = yield* repo.findSecretHash(clientId)
+        const hash       = yield* crypto.sha256(clientSecret)
+        if (secretHash !== hash) return yield* new InvalidClientSecretError()
+        return client
+      })
+
+      return ClientService.of({ create, findById, findByClientId, validateClient, verifyCredentials, update, deactivate })
     })
   ).pipe(Layer.provide(ClientRepo.layer))
 }

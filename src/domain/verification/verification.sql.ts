@@ -34,7 +34,9 @@ const toVerification = (row: VerificationRow): Verification => ({
 export class VerificationRepo extends Context.Service<VerificationRepo, {
   insert(identifier: string, value: string, metadata: unknown, expiresAt: Date): Effect.Effect<Verification, SqlError.SqlError>
   findByValue(value: string): Effect.Effect<Verification | null, SqlError.SqlError>
+  findBySessionId(sessionId: string): Effect.Effect<Verification | null, SqlError.SqlError>
   markUsed(id: string): Effect.Effect<void, SqlError.SqlError>
+  updatePayload(id: string, metadata: unknown): Effect.Effect<void, SqlError.SqlError>
 }>()("sso/domain/VerificationRepo") {
   static readonly layer = Layer.effect(
     VerificationRepo,
@@ -62,13 +64,30 @@ export class VerificationRepo extends Context.Service<VerificationRepo, {
         return rows[0] ? toVerification(rows[0]) : null
       })
 
+      const findBySessionId = Effect.fn("VerificationRepo.findBySessionId")(function* (sessionId: string) {
+        const rows = yield* sql<VerificationRow>`
+          SELECT * FROM verification
+          WHERE identifier = 'qr_login'
+            AND metadata->>'session_id' = ${sessionId}
+          ORDER BY created_at DESC
+          LIMIT 1
+        `
+        return rows[0] ? toVerification(rows[0]) : null
+      })
+
       const markUsed = Effect.fn("VerificationRepo.markUsed")(function* (id: string) {
         yield* sql`
           UPDATE verification SET used_at = now() WHERE id = ${id}
         `
       })
 
-      return VerificationRepo.of({ insert, findByValue, markUsed })
+      const updatePayload = Effect.fn("VerificationRepo.updatePayload")(function* (id: string, metadata: unknown) {
+        yield* sql`
+          UPDATE verification SET metadata = ${JSON.stringify(metadata)} WHERE id = ${id}
+        `
+      })
+
+      return VerificationRepo.of({ insert, findByValue, findBySessionId, markUsed, updatePayload })
     })
   )
 }

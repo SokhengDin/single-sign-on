@@ -51,14 +51,14 @@ const toAuthCode = (row: AuthCodeRow): AuthCode => ({
 
 export class AuthorizationRepo extends Context.Service<AuthorizationRepo, {
   insert(
-    code: string,
-    userId: string,
+    code: 		string,
+    userId: 	string,
     clientId: string,
-    redirectUri: string,
-    scopes: readonly string[],
-    codeChallenge: string | null,
-    challengeMethod: string | null,
-    nonce: string | null,
+    redirectUri: 	string,
+    scopes: 			readonly string[],
+    codeChallenge: 		string | null,
+    challengeMethod: 	string | null,
+    nonce:		 string | null,
     expiresAt: Date
   ): Effect.Effect<AuthCode, SqlError.SqlError>
   findByCode(code: string): Effect.Effect<AuthCode | null, SqlError.SqlError>
@@ -70,15 +70,15 @@ export class AuthorizationRepo extends Context.Service<AuthorizationRepo, {
       const sql = yield* SqlClient.SqlClient
 
       const insert = Effect.fn("AuthorizationRepo.insert")(function* (
-        code: string,
-        userId: string,
+        code: 		string,
+        userId: 	string,
         clientId: string,
-        redirectUri: string,
-        scopes: readonly string[],
-        codeChallenge: string | null,
-        challengeMethod: string | null,
-        nonce: string | null,
-        expiresAt: Date
+        redirectUri: 			string,
+        scopes: 					readonly string[],
+        codeChallenge: 		string | null,
+        challengeMethod: 	string | null,
+        nonce: 			string | null,
+        expiresAt: 	Date
       ) {
         const rows = yield* sql<AuthCodeRow>`
           INSERT INTO authorization_code

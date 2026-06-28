@@ -84,7 +84,7 @@ export const AuthorizationHandlers = HttpApiBuilder.group(
               challengeMethod: query.code_challenge_method ?? null,
               nonce:           query.nonce ?? null,
             }).pipe(
-              Effect.catchTag("SqlError", () => httpError(503, "service unavailable")),
+              Effect.catchTag("SqlError", (e) => httpError(503, e.message)),
             )
             return apiOk({ redirect_uri: `${redirectUri}?code=${code}&state=${query.state ?? ""}` })
           })
