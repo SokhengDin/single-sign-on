@@ -9,6 +9,7 @@ FROM base AS runner
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-EXPOSE 3000
+ARG APP_PORT=3004
+EXPOSE ${APP_PORT}
 
 CMD ["bun", "run", "index.ts"]

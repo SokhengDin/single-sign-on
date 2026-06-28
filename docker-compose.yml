@@ -3,10 +3,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        APP_PORT: ${APP_PORT}
     container_name: sso
     restart: unless-stopped
     ports:
-      - "${APP_PORT}:$APP_PORT"
+      - "${APP_PORT}:${APP_PORT}"
     environment:
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
@@ -16,6 +18,7 @@ services:
       DB_SSLMODE: ${DB_SSLMODE}
       APP_URL: ${APP_URL}
       APP_ENV: ${APP_ENV}
+      APP_PORT: ${APP_PORT}
       SIGNING_KEY_ENCRYPTION_SECRET: ${SIGNING_KEY_ENCRYPTION_SECRET}
     networks:
       - eroxii_network

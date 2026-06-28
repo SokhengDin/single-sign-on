@@ -1,5 +1,5 @@
 import { BunHttpServer, BunRuntime } from "@effect/platform-bun"
-import { Config, Layer } from "effect"
+import { Effect, Layer } from "effect"
 import { HttpApi, HttpApiBuilder, HttpApiSwagger, OpenApi } from "effect/unstable/httpapi"
 import { HttpRouter } from "effect/unstable/http"
 import { AppConfig } from "./src/config/index.ts"
@@ -62,14 +62,14 @@ const AllRoutes = Layer.mergeAll(
 
 const middleware = (app: Parameters<typeof httpLogger>[0]) => httpLogger(errorHandler(app))
 
+const BunServerLayer = Layer.unwrap(
+  Effect.map(AppConfig, ({ appPort }) => BunHttpServer.layer({ port: appPort }))
+).pipe(Layer.provide(InfraLayer))
+
 const HttpServerLayer = HttpRouter.serve(AllRoutes, {
-	middleware, disableLogger: true
+  middleware, disableLogger: true
 }).pipe(
-  Layer.provide(
-    BunHttpServer.layerConfig({
-      port: Config.withDefault(Config.int("PORT"), 3004),
-    })
-  ),
+  Layer.provide(BunServerLayer),
   Layer.provide(InfraLayer),
   Layer.provide(LoggerLive),
 )

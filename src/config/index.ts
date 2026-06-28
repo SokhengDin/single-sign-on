@@ -9,7 +9,7 @@ export interface AppConfigService {
   readonly dbSslMode:         string
   readonly appUrl:            string
   readonly appEnv:            string
-  readonly port:              number
+  readonly appPort:           number
   readonly signingKeySecret:  string
 }
 
@@ -25,12 +25,12 @@ export class AppConfig extends Context.Service<AppConfig, AppConfigService>()("s
       const dbSslMode        = yield* Config.string("DB_SSLMODE")
       const appUrl           = yield* Config.string("APP_URL")
       const appEnv           = yield* Config.withDefault(Config.string("APP_ENV"), "development")
-      const port             = yield* Config.withDefault(Config.int("PORT"), 3000)
+      const appPort          = yield* Config.withDefault(Config.int("APP_PORT"), 3005)
       const signingKeySecret = yield* Config.string("SIGNING_KEY_ENCRYPTION_SECRET")
 
       return AppConfig.of({
         dbHost, dbPort, dbUser, dbPassword, dbName, dbSslMode,
-        appUrl, appEnv, port, signingKeySecret,
+        appUrl, appEnv, appPort, signingKeySecret,
       })
     })
   )
