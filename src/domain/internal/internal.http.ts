@@ -46,8 +46,10 @@ export const InternalHandlers = HttpApiBuilder.group(
               Effect.catchTag("SqlError",            () => httpError(503, "service unavailable")),
             )
 
+            if (!client.provider) return yield* httpError(400, "client has no provider configured")
+
             const account = yield* accounts.upsert({
-              provider:     client.name,
+              provider:     client.provider,
               provider_id:  payload.provider_id,
               display_name: displayName,
               payload: {

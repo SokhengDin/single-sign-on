@@ -7,6 +7,7 @@ export const Client = Schema.Struct({
   id:            Schema.String,
   name:          Schema.String,
   type:          ClientType,
+  provider:      Schema.NullOr(Schema.String),
   client_id:     Schema.String,
   redirect_uris: Schema.Array(Schema.String),
   scopes:        Schema.Array(Schema.String),

@@ -6,6 +6,7 @@ type ClientRow = {
   id:            string
   name:          string
   type:          ClientType
+  provider:      string | null
   client_id:     string
   client_secret: string | null
   redirect_uris: string[]
@@ -21,6 +22,7 @@ const toClient = (row: ClientRow): Client => ({
   id:            row.id,
   name:          row.name,
   type:          row.type,
+  provider:      row.provider ?? null,
   client_id:     row.client_id,
   redirect_uris: row.redirect_uris,
   scopes:        row.scopes,

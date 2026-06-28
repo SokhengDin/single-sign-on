@@ -3,7 +3,7 @@ import { Effect, Layer } from "effect"
 import { HttpApi, HttpApiBuilder, HttpApiEndpoint, HttpApiGroup, HttpApiSchema } from "effect/unstable/httpapi"
 import { CreateUserInput, LinkAccountInput, LinkedAccount, UpdateUserInput, User } from "./user.type.ts"
 import { UserService } from "./user.ts"
-import { ApiListResponse, ApiResponse, apiOk } from "@/infra/response.ts"
+import { ApiListResponse, ApiResponse, apiOk, httpError, unwrapHttpErrors } from "@/infra/response.ts"
 
 export class UserApi extends HttpApi.make("user-api")
   .add(
@@ -61,7 +61,13 @@ export const UserHandlers = HttpApiBuilder.group(
         users.softDelete(params.user_id).pipe(Effect.as(void 0), Effect.orDie)
       )
       .handle("linkAccount", ({ payload }) =>
-        users.linkAccount(payload).pipe(Effect.map(data => apiOk(data)), Effect.orDie)
+        unwrapHttpErrors(
+          users.linkAccount(payload).pipe(
+            Effect.map(data => apiOk(data)),
+            Effect.catchTag("LinkedAccountConflictError", () => httpError(409, "linked account already exists")),
+            Effect.catchTag("SqlError", () => httpError(503, "service unavailable")),
+          )
+        )
       )
       .handle("unlinkAccount", ({ params }) =>
         users.unlinkAccount(params.user_id, params.external_system).pipe(Effect.as(void 0), Effect.orDie)
