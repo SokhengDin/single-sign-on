@@ -5,9 +5,19 @@ services:
       dockerfile: Dockerfile
     container_name: sso
     restart: unless-stopped
-    env_file: .env
     ports:
-      - "${APP_PORT:-3000}:3000"
+      - "${PORT}:3000"
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_SSLMODE: ${DB_SSLMODE}
+      APP_URL: ${APP_URL}
+      APP_ENV: ${APP_ENV}
+      PORT: 3000
+      SIGNING_KEY_ENCRYPTION_SECRET: ${SIGNING_KEY_ENCRYPTION_SECRET}
     networks:
       - eroxii_network
 

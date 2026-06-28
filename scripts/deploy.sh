@@ -18,5 +18,8 @@ docker compose down
 echo "==> Starting service..."
 docker compose up -d
 
+echo "==> Running migrations..."
+docker compose exec sso bun run migrate
+
 echo "==> Done. Logs:"
 docker compose logs --tail=50 sso
