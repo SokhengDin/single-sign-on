@@ -6,7 +6,7 @@ services:
     container_name: sso
     restart: unless-stopped
     ports:
-      - "${PORT}:3000"
+      - "${APP_PORT}:3000"
     environment:
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
@@ -16,7 +16,6 @@ services:
       DB_SSLMODE: ${DB_SSLMODE}
       APP_URL: ${APP_URL}
       APP_ENV: ${APP_ENV}
-      PORT: 3000
       SIGNING_KEY_ENCRYPTION_SECRET: ${SIGNING_KEY_ENCRYPTION_SECRET}
     networks:
       - eroxii_network
