@@ -3,11 +3,12 @@ import { SqlClient, SqlError } from "effect/unstable/sql"
 import { Client, ClientType } from "./client.type.ts"
 
 type ClientRow = {
-  id:            string
-  name:          string
-  type:          ClientType
-  provider:      string | null
-  client_id:     string
+  id:              string
+  name:            string
+  type:            ClientType
+  provider:        string | null
+  external_system: string | null
+  client_id:       string
   client_secret: string | null
   redirect_uris: string[]
   scopes:        string[]
@@ -22,8 +23,9 @@ const toClient = (row: ClientRow): Client => ({
   id:            row.id,
   name:          row.name,
   type:          row.type,
-  provider:      row.provider ?? null,
-  client_id:     row.client_id,
+  provider:        row.provider ?? null,
+  external_system: row.external_system ?? null,
+  client_id:       row.client_id,
   redirect_uris: row.redirect_uris,
   scopes:        row.scopes,
   grant_types:   row.grant_types,

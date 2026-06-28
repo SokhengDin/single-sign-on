@@ -9,3 +9,8 @@ export const ProviderConfirmBody = Schema.Struct({
   last_name:   Schema.optional(Schema.String),
 })
 export type ProviderConfirmBody = Schema.Schema.Type<typeof ProviderConfirmBody>
+
+export const ProviderConfirmResponse = Schema.Struct({
+  external_system: Schema.String,
+})
+export type ProviderConfirmResponse = Schema.Schema.Type<typeof ProviderConfirmResponse>
