@@ -138,13 +138,7 @@ CREATE TABLE client (
   CONSTRAINT chk_secret_or_public  CHECK (
     (is_public = true  AND client_secret IS NULL) OR
     (is_public = false AND client_secret IS NOT NULL)
-  ),
-  -- CONSTRAINT chk_backend_no_redirect CHECK (
-  --   type != 'backend' OR cardinality(redirect_uris) = 0
-  -- ),
-  -- CONSTRAINT chk_bot_has_redirect    CHECK (
-  --   type != 'bot' OR cardinality(redirect_uris) > 0
-  -- )
+  )
 );
 
 -- =============================================================================
