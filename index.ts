@@ -55,9 +55,17 @@ const ApiLayer = Layer.mergeAll(
   HttpApiBuilder.layer(InternalApi).pipe(Layer.provide(InternalHandlers)),
 ).pipe(Layer.provide(InfraLayer))
 
+const SwaggerLayer = Layer.unwrap(
+  Effect.map(AppConfig, ({ appEnv }) =>
+    appEnv === "development"
+      ? HttpApiSwagger.layer(RootApi, { path: "/docs" })
+      : Layer.empty
+  )
+).pipe(Layer.provide(InfraLayer))
+
 const AllRoutes = Layer.mergeAll(
   ApiLayer,
-  HttpApiSwagger.layer(RootApi, { path: "/docs" }),
+  SwaggerLayer,
 )
 
 const middleware = (app: Parameters<typeof httpLogger>[0]) => httpLogger(errorHandler(app))
