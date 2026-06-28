@@ -40,7 +40,7 @@ export const LoginHandlers = HttpApiBuilder.group(
               Effect.catchTag("SqlError", () => httpError(503, "service unavailable")),
             )
 
-            const qrUrl = `https://t.me/${client.name}/app?startapp=${qrToken}`
+            const qrUrl = `https://t.me/${client.name}?startapp=${qrToken}`
             return apiOk({ session_id: query.session_id, qr_url: qrUrl, expires_in: 300 })
           })
         )
